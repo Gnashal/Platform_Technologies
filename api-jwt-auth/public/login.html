@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+  </head>
+  <body>
+    <div class="login-container">
+      <h2>Login</h2>
+      <form id="loginForm">
+        <input
+          type="text"
+          id="username"
+          name="username"
+          placeholder="Username"
+          required
+        />
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Password"
+          required
+        />
+        <button type="submit">Login</button>
+      </form>
+      <p id="error" style="color: red; display: none"></p>
+    </div>
+
+    <div class="protected-container" style="display: none">
+      <h2>Access Protected Route</h2>
+      <button id="accessProfileButton">Access Profile</button>
+      <p id="protectedMessage"></p>
+    </div>
+
+    <script>
+      const loginForm = document.getElementById("loginForm");
+      const errorElement = document.getElementById("error");
+      const protectedContainer = document.querySelector(".protected-container");
+      const accessProfileButton = document.getElementById(
+        "accessProfileButton"
+      );
+      const protectedMessage = document.getElementById("protectedMessage");
+
+      // Handle login form submission
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        const response = await fetch("/api/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          alert("Login successful!");
+          localStorage.setItem("token", result.token); // Store token in localStorage
+          loginForm.style.display = "none"; // Hide login form
+          protectedContainer.style.display = "block"; // Show protected container
+        } else {
+          errorElement.style.display = "block";
+          errorElement.textContent =
+            result.message || "Invalid username or password";
+        }
+      });
+
+      // Handle access profile button click
+      accessProfileButton.addEventListener("click", async () => {
+        const token = localStorage.getItem("token");
+
+        const response = await fetch("/api/profile", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`, // Include token in Authorization header
+          },
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          protectedMessage.textContent = `Response: ${JSON.stringify(result)}`;
+        } else {
+          protectedMessage.textContent =
+            result.message || "Access denied or invalid token";
+        }
+      });
+    </script>
+  </body>
+</html>
